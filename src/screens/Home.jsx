@@ -60,20 +60,33 @@ export default function Home({ onSelect }) {
             <div style={{ padding:'22px 28px 24px' }}>
               <div style={{ fontSize:22, fontWeight:700, color:'#fff', marginBottom:8 }}>{g.title}</div>
               <div style={{ fontSize:13, color:'rgba(255,255,255,0.45)', lineHeight:1.6, marginBottom:20 }}>{g.desc}</div>
-              <button style={{
-                width:'100%', padding:'14px',
-                borderRadius:14, fontSize:15, fontWeight:600,
-                background: g.dim,
-                border:`1px solid ${g.border}`,
-                color: g.color,
-                transition:'background 0.2s',
-                letterSpacing:0.3,
-              }}
-              onMouseEnter={e => e.currentTarget.style.background=g.border}
-              onMouseLeave={e => e.currentTarget.style.background=g.dim}
-              >
-                Jouer vs IA →
-              </button>
+              <div style={{ display:'flex', gap:10 }}>
+  <button
+    onClick={(e) => { e.stopPropagation(); onSelect(g.id, 'ai'); }}
+    style={{
+      flex:1, padding:'13px 8px', borderRadius:14, fontSize:13, fontWeight:600,
+      background: g.dim, border:`1px solid ${g.border}`, color: g.color,
+      transition:'background 0.2s', letterSpacing:0.3, cursor:'pointer',
+    }}
+    onMouseEnter={e => e.currentTarget.style.background=g.border}
+    onMouseLeave={e => e.currentTarget.style.background=g.dim}
+  >
+    vs IA
+  </button>
+  <button
+    onClick={(e) => { e.stopPropagation(); onSelect(g.id, '2p'); }}
+    style={{
+      flex:1, padding:'13px 8px', borderRadius:14, fontSize:13, fontWeight:600,
+      background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.12)',
+      color:'rgba(255,255,255,0.7)',
+      transition:'background 0.2s', letterSpacing:0.3, cursor:'pointer',
+    }}
+    onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.1)'}
+    onMouseLeave={e => e.currentTarget.style.background='rgba(255,255,255,0.05)'}
+  >
+    2 Joueurs
+  </button>
+</div>
             </div>
           </div>
         ))}

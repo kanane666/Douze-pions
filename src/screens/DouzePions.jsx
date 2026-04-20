@@ -4,18 +4,15 @@ import TopBar from '../components/TopBar.jsx';
 import TurnBadge from '../components/TurnBadge.jsx';
 import StatsBar from '../components/StatsBar.jsx';
 
-export default function DouzePions({ onBack, stats, onStats }) {
+export default function DouzePions({ onBack, stats, onStats, mode }) {
   const [board, setBoard]       = useState(makeBoard);
   const [sel, setSel]           = useState(null);
   const [turn, setTurn]         = useState('j1');
   const [winner, setWinner]     = useState(null);
   const [thinking, setThinking] = useState(false);
   const [last, setLast]         = useState(null);
-  // null = pas de prise en cours | number = index du pion qui doit continuer
   const [chainPion, setChain]   = useState(null);
 
-  // Si prise en chaîne active → uniquement les captures de ce pion
-  // Sinon → mouvements normaux du pion sélectionné
   const currentMoves = sel !== null
     ? (chainPion !== null ? getCaptures(board, sel) : getMoves(board, sel))
     : [];
@@ -36,80 +33,62 @@ export default function DouzePions({ onBack, stats, onStats }) {
   const doAI = useCallback((b) => {
     setThinking(true);
     setTimeout(() => {
-      let cur = b;
-      let pos = null;
-
+      let cur = b, pos = null;
       const first = aiMove(cur);
       if (!first) { endGame('j1'); setThinking(false); return; }
       cur = applyMove(cur, first.from, first.to);
       pos = first.to;
-
-      // Chaîne captures IA : uniquement si le coup était une capture
-      if (first.score >= 15 || getCaptures(b, first.from).some(m => m.to === first.to)) {
-        while (true) {
-          const nextCaps = getCaptures(cur, pos);
-          if (!nextCaps.length) break;
-          const pick = nextCaps[Math.floor(Math.random() * nextCaps.length)];
-          cur = applyMove(cur, pos, pick.to);
-          pos = pick.to;
-        }
+      while (true) {
+        const caps = getCaptures(cur, pos);
+        if (!caps.length) break;
+        const pick = caps[Math.floor(Math.random() * caps.length)];
+        cur = applyMove(cur, pos, pick.to);
+        pos = pick.to;
       }
-
       setBoard(cur); setLast(pos);
       const end = checkEnd(cur);
-      if (end) endGame(end);
-      else setTurn('j1');
+      if (end) endGame(end); else setTurn('j1');
       setThinking(false);
     }, 400 + Math.random() * 400);
   }, []);
 
-  function onCell(i) {
-    if (winner || turn !== 'j1' || thinking) return;
+  function handleMove(b, from, to, wasCapture, landIdx) {
+    const next = applyMove(b, from, to);
+    setBoard(next); setLast(landIdx);
+    const end = checkEnd(next);
+    if (end) { endGame(end); setSel(null); setChain(null); return; }
 
-    // ── Prise en chaîne active ──────────────────────────────────
+    if (wasCapture && getCaptures(next, landIdx).length > 0) {
+      setSel(landIdx); setChain(landIdx);
+    } else {
+      setSel(null); setChain(null);
+      const nextTurn = turn === 'j1' ? 'j2' : 'j1';
+      setTurn(nextTurn);
+      if (mode === 'ai' && nextTurn === 'j2') doAI(next);
+    }
+  }
+
+  function onCell(i) {
+    if (winner || thinking) return;
+    // En mode 2 joueurs, chaque joueur joue ses pions
+    const currentPlayer = turn;
+
     if (chainPion !== null) {
       if (moveTargets.includes(i)) {
-        const next = applyMove(board, chainPion, i);
-        setBoard(next); setLast(i);
-        const end = checkEnd(next);
-        if (end) { endGame(end); setSel(null); setChain(null); return; }
-
-        const moreCaps = getCaptures(next, i);
-        if (moreCaps.length > 0) {
-          // Encore des prises disponibles → on continue avec ce pion
-          setSel(i); setChain(i);
-        } else {
-          // Plus de prise → fin du tour
-          setSel(null); setChain(null);
-          setTurn('j2'); doAI(next);
-        }
+        handleMove(board, chainPion, i, true, i);
       }
-      // En mode chaîne on ignore tout clic ailleurs
       return;
     }
 
-    // ── Jeu normal ──────────────────────────────────────────────
     if (sel === null) {
-      if (board[i]?.p === 'j1') setSel(i);
+      if (board[i]?.p === currentPlayer) setSel(i);
       return;
     }
 
     if (moveTargets.includes(i)) {
       const wasCapture = currentMoves.find(m => m.to === i)?.capture !== null;
-      const next = applyMove(board, sel, i);
-      setBoard(next); setLast(i);
-      const end = checkEnd(next);
-      if (end) { endGame(end); setSel(null); return; }
-
-      if (wasCapture && getCaptures(next, i).length > 0) {
-        // Prise + encore des prises dispo → chaîne !
-        setSel(i); setChain(i);
-      } else {
-        // Déplacement simple OU prise sans suite → fin du tour
-        setSel(null); setChain(null);
-        setTurn('j2'); doAI(next);
-      }
-    } else if (board[i]?.p === 'j1') {
+      handleMove(board, sel, i, wasCapture, i);
+    } else if (board[i]?.p === currentPlayer) {
       setSel(i);
     } else {
       setSel(null);
@@ -118,25 +97,23 @@ export default function DouzePions({ onBack, stats, onStats }) {
 
   const j1c = board.filter(x => x?.p === 'j1').length;
   const j2c = board.filter(x => x?.p === 'j2').length;
+  const j2Label = mode === 'ai' ? 'IA' : 'Joueur 2';
 
   return (
     <div style={{ maxWidth:480, margin:'0 auto' }}>
       <TopBar title="Douze Pions" onBack={onBack} onReset={reset} />
       <StatsBar stats={stats} />
-      <TurnBadge turn={turn} thinking={thinking} winner={winner} />
+      <TurnBadge turn={turn} thinking={thinking} winner={winner} mode={mode} />
 
       {chainPion !== null && (
-        <div style={{
-          textAlign:'center', fontSize:13, color:'#e040a0',
-          marginBottom:8, fontWeight:600, letterSpacing:0.3
-        }}>
+        <div style={{ textAlign:'center', fontSize:13, color:'#e040a0', marginBottom:8, fontWeight:600 }}>
           Prise multiple — continuez avec ce pion !
         </div>
       )}
 
       <div style={{ display:'flex', justifyContent:'space-between', padding:'0 24px 16px' }}>
-        <PlayerCard label="Vous" count={j1c} color="#e040a0" active={turn==='j1'&&!winner} />
-        <PlayerCard label="IA" count={j2c} color="#00d4ff" active={turn==='j2'&&!winner} />
+        <PlayerCard label="Joueur 1" count={j1c} color="#e040a0" active={turn==='j1'&&!winner} />
+        <PlayerCard label={j2Label} count={j2c} color="#00d4ff" active={turn==='j2'&&!winner} />
       </div>
 
       <div style={{ padding:'0 16px' }}>
@@ -154,13 +131,13 @@ export default function DouzePions({ onBack, stats, onStats }) {
             return (
               <div key={i} onClick={() => onCell(i)} style={{
                 aspectRatio:'1', borderRadius:12,
-                background: isSel   ? 'rgba(224,64,160,0.22)'
-                          : isMov   ? 'rgba(0,230,118,0.12)'
-                          : isLast  ? 'rgba(255,255,255,0.06)'
+                background: isSel  ? 'rgba(224,64,160,0.22)'
+                          : isMov  ? 'rgba(0,230,118,0.12)'
+                          : isLast ? 'rgba(255,255,255,0.06)'
                           : 'rgba(255,255,255,0.03)',
-                border: isSel    ? '1.5px solid rgba(224,64,160,0.7)'
-                      : isMov    ? '1.5px solid rgba(0,230,118,0.55)'
-                      : isChain  ? '1.5px solid #e040a0'
+                border: isSel   ? '1.5px solid rgba(224,64,160,0.7)'
+                      : isMov   ? '1.5px solid rgba(0,230,118,0.55)'
+                      : isChain ? '1.5px solid #e040a0'
                       : '1px solid rgba(255,255,255,0.06)',
                 display:'flex', alignItems:'center', justifyContent:'center',
                 cursor: !winner && !thinking ? 'pointer' : 'default',
@@ -169,10 +146,10 @@ export default function DouzePions({ onBack, stats, onStats }) {
                 {cell && (
                   <div style={{
                     width:'70%', height:'70%', borderRadius:'50%',
-                    background: cell.p === 'j1'
+                    background: cell.p==='j1'
                       ? 'radial-gradient(circle at 35% 30%, #f9a8d4, #e040a0)'
                       : 'radial-gradient(circle at 35% 30%, #a5f3fc, #00d4ff)',
-                    boxShadow: cell.p === 'j1'
+                    boxShadow: cell.p==='j1'
                       ? '0 0 12px rgba(224,64,160,0.45), inset 0 1px 1px rgba(255,255,255,0.3)'
                       : '0 0 12px rgba(0,212,255,0.45), inset 0 1px 1px rgba(255,255,255,0.3)',
                     border: cell.dame ? '2px solid rgba(255,255,255,0.65)' : 'none',
@@ -197,9 +174,7 @@ export default function DouzePions({ onBack, stats, onStats }) {
             background:'rgba(255,255,255,0.07)',
             border:'1px solid rgba(255,255,255,0.12)',
             color:'#fff', fontSize:15, fontWeight:600,
-          }}>
-            Rejouer
-          </button>
+          }}>Rejouer</button>
         </div>
       )}
     </div>
