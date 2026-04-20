@@ -1,0 +1,37 @@
+@import '@fontsource/space-grotesk/400.css';
+@import '@fontsource/space-grotesk/500.css';
+@import '@fontsource/space-grotesk/600.css';
+@import '@fontsource/space-grotesk/700.css';
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #0f0f14;
+  --bg2:       #16161f;
+  --bg3:       #1e1e2a;
+  --border:    rgba(255,255,255,0.08);
+  --border2:   rgba(255,255,255,0.15);
+  --text:      #ffffff;
+  --text2:     rgba(255,255,255,0.55);
+  --text3:     rgba(255,255,255,0.25);
+  --pink:      #e040a0;
+  --pink-dim:  rgba(224,64,160,0.18);
+  --cyan:      #00d4ff;
+  --cyan-dim:  rgba(0,212,255,0.18);
+  --green:     #00e676;
+  --green-dim: rgba(0,230,118,0.15);
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+}
+
+html, body, #root {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+button { font-family: inherit; cursor: pointer; border: none; outline: none; }
