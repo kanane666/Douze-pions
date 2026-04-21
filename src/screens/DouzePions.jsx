@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { makeBoard, getMoves, getCaptures, applyMove, checkEnd, aiMove } from '../logic/douze.js';
+import { makeBoard, getMoves, getCaptures, applyMove, checkEnd, aiMove, serializeBoard } from '../logic/douze.js';
 import TopBar from '../components/TopBar.jsx';
 import TurnBadge from '../components/TurnBadge.jsx';
 import StatsBar from '../components/StatsBar.jsx';
@@ -12,6 +12,7 @@ export default function DouzePions({ onBack, stats, onStats, mode, difficulty })
   const [thinking, setThinking] = useState(false);
   const [last, setLast]         = useState(null);
   const [chainPion, setChain]   = useState(null);
+  const [history, setHistory]   = useState([serializeBoard(makeBoard())]);
 
   const currentMoves = sel !== null
     ? (chainPion !== null ? getCaptures(board, sel) : getMoves(board, sel))
@@ -19,8 +20,10 @@ export default function DouzePions({ onBack, stats, onStats, mode, difficulty })
   const moveTargets = currentMoves.map(m => m.to);
 
   const reset = () => {
-    setBoard(makeBoard()); setSel(null); setTurn('j1');
+    const b = makeBoard();
+    setBoard(b); setSel(null); setTurn('j1');
     setWinner(null); setThinking(false); setLast(null); setChain(null);
+    setHistory([serializeBoard(b)]);
   };
 
   function endGame(result) {
@@ -30,36 +33,43 @@ export default function DouzePions({ onBack, stats, onStats, mode, difficulty })
     else onStats('draws');
   }
 
-  const doAI = useCallback((b) => {
-  setThinking(true);
-  setTimeout(() => {
-    let cur = b;
+  function addHistory(b, hist) {
+    return [...hist, serializeBoard(b)];
+  }
 
-    const first = aiMove(cur, difficulty);
-    if (!first) { endGame('j1'); setThinking(false); return; }
+  const doAI = useCallback((b, hist) => {
+    setThinking(true);
+    setTimeout(() => {
+      let cur = b;
+      let curHist = hist;
 
-    const wasCapture = getCaptures(cur, first.from).some(m => m.to === first.to);
-    cur = applyMove(cur, first.from, first.to);
-    let pos = first.to;
+      const first = aiMove(cur, difficulty);
+      if (!first) { endGame('j1'); setThinking(false); return; }
 
-    // Chaîne captures IA — uniquement si le premier coup était une prise
-    if (wasCapture) {
-      while (true) {
-        const caps = getCaptures(cur, pos);
-        if (!caps.length) break;
-        const pick = caps[Math.floor(Math.random() * caps.length)];
-        cur = applyMove(cur, pos, pick.to);
-        pos = pick.to;
+      const wasCapture = getCaptures(cur, first.from).some(m => m.to === first.to);
+      cur = applyMove(cur, first.from, first.to);
+      let pos = first.to;
+      curHist = addHistory(cur, curHist);
+
+      // Chaîne captures IA
+      if (wasCapture) {
+        while (true) {
+          const caps = getCaptures(cur, pos);
+          if (!caps.length) break;
+          const pick = caps[Math.floor(Math.random() * caps.length)];
+          cur = applyMove(cur, pos, pick.to);
+          pos = pick.to;
+          curHist = addHistory(cur, curHist);
+        }
       }
-    }
 
-    setBoard(cur); setLast(pos);
-    const end = checkEnd(cur);
-    if (end) endGame(end);
-    else setTurn('j1');
-    setThinking(false);
-  }, 400 + Math.random() * 400);
-}, []);
+      setBoard(cur); setLast(pos); setHistory(curHist);
+      const end = checkEnd(cur, curHist);
+      if (end) endGame(end);
+      else setTurn('j1');
+      setThinking(false);
+    }, 400 + Math.random() * 400);
+  }, [difficulty]);
 
   function onCell(i) {
     if (winner || thinking) return;
@@ -69,8 +79,9 @@ export default function DouzePions({ onBack, stats, onStats, mode, difficulty })
     if (chainPion !== null) {
       if (moveTargets.includes(i)) {
         const next = applyMove(board, chainPion, i);
-        setBoard(next); setLast(i);
-        const end = checkEnd(next);
+        const newHist = addHistory(next, history);
+        setBoard(next); setLast(i); setHistory(newHist);
+        const end = checkEnd(next, newHist);
         if (end) { endGame(end); setSel(null); setChain(null); return; }
         if (getCaptures(next, i).length > 0) {
           setSel(i); setChain(i);
@@ -78,7 +89,7 @@ export default function DouzePions({ onBack, stats, onStats, mode, difficulty })
           setSel(null); setChain(null);
           const nextTurn = turn === 'j1' ? 'j2' : 'j1';
           setTurn(nextTurn);
-          if (mode === 'ai' && nextTurn === 'j2') doAI(next);
+          if (mode === 'ai' && nextTurn === 'j2') doAI(next, newHist);
         }
       }
       return;
@@ -93,8 +104,9 @@ export default function DouzePions({ onBack, stats, onStats, mode, difficulty })
     if (moveTargets.includes(i)) {
       const wasCapture = currentMoves.find(m => m.to === i)?.capture !== null;
       const next = applyMove(board, sel, i);
-      setBoard(next); setLast(i);
-      const end = checkEnd(next);
+      const newHist = addHistory(next, history);
+      setBoard(next); setLast(i); setHistory(newHist);
+      const end = checkEnd(next, newHist);
       if (end) { endGame(end); setSel(null); return; }
 
       if (wasCapture && getCaptures(next, i).length > 0) {
@@ -103,7 +115,7 @@ export default function DouzePions({ onBack, stats, onStats, mode, difficulty })
         setSel(null); setChain(null);
         const nextTurn = turn === 'j1' ? 'j2' : 'j1';
         setTurn(nextTurn);
-        if (mode === 'ai' && nextTurn === 'j2') doAI(next);
+        if (mode === 'ai' && nextTurn === 'j2') doAI(next, newHist);
       }
     } else if (board[i]?.p === currentPlayer) {
       setSel(i);
@@ -119,7 +131,7 @@ export default function DouzePions({ onBack, stats, onStats, mode, difficulty })
   return (
     <div style={{ maxWidth: 480, margin: '0 auto' }}>
       <TopBar title="Douze Pions" onBack={onBack} onReset={reset} />
-      <StatsBar stats={stats} />
+      <StatsBar stats={stats} mode={mode} />
       <TurnBadge turn={turn} thinking={thinking} winner={winner} mode={mode} />
 
       {chainPion !== null && (
@@ -145,16 +157,20 @@ export default function DouzePions({ onBack, stats, onStats, mode, difficulty })
             const isMov   = moveTargets.includes(i);
             const isLast  = last === i;
             const isChain = chainPion === i;
+            // Distinguer visuellement captures vs simples
+            const isCapture = isMov && currentMoves.find(m => m.to === i)?.capture !== null;
             return (
               <div key={i} onClick={() => onCell(i)} style={{
                 aspectRatio: '1', borderRadius: 12,
-                background: isSel  ? 'rgba(224,64,160,0.22)'
-                          : isMov  ? 'rgba(0,230,118,0.12)'
-                          : isLast ? 'rgba(255,255,255,0.06)'
+                background: isSel      ? 'rgba(224,64,160,0.22)'
+                          : isCapture  ? 'rgba(255,100,0,0.12)'
+                          : isMov      ? 'rgba(0,230,118,0.12)'
+                          : isLast     ? 'rgba(255,255,255,0.06)'
                           : 'rgba(255,255,255,0.03)',
-                border: isSel   ? '1.5px solid rgba(224,64,160,0.7)'
-                      : isMov   ? '1.5px solid rgba(0,230,118,0.55)'
-                      : isChain ? '1.5px solid #e040a0'
+                border: isSel      ? '1.5px solid rgba(224,64,160,0.7)'
+                      : isCapture  ? '1.5px solid rgba(255,120,0,0.7)'
+                      : isMov      ? '1.5px solid rgba(0,230,118,0.55)'
+                      : isChain    ? '1.5px solid #e040a0'
                       : '1px solid rgba(255,255,255,0.06)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 cursor: !winner && !thinking ? 'pointer' : 'default',

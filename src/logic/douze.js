@@ -23,7 +23,6 @@ function getCap(board, from, to) {
   return null;
 }
 
-// Retourne uniquement les captures disponibles depuis i
 export function getCaptures(board, i) {
   const pion = board[i];
   if (!pion) return [];
@@ -57,7 +56,6 @@ export function getCaptures(board, i) {
   return captures;
 }
 
-// Retourne uniquement les déplacements simples (pas de capture)
 export function getSimpleMoves(board, i) {
   const pion = board[i];
   if (!pion) return [];
@@ -83,10 +81,11 @@ export function getSimpleMoves(board, i) {
   return moves;
 }
 
-// getMoves : captures prioritaires, sinon simples
+// MODIFIÉ : retourne captures + simples ensemble — prise non obligatoire
 export function getMoves(board, i) {
-  const caps = getCaptures(board, i);
-  return caps.length > 0 ? caps : getSimpleMoves(board, i);
+  const caps    = getCaptures(board, i);
+  const simples = getSimpleMoves(board, i);
+  return [...caps, ...simples];
 }
 
 export function applyMove(board, from, to) {
@@ -100,14 +99,29 @@ export function applyMove(board, from, to) {
   return b;
 }
 
-export function checkEnd(board) {
+// Sérialise le plateau pour comparaison
+export function serializeBoard(board) {
+  return board.map(c => c ? `${c.p}${c.dame?'D':''}` : '.').join('');
+}
+
+export function checkEnd(board, history = []) {
   const j1 = board.filter(x => x?.p === 'j1').length;
   const j2 = board.filter(x => x?.p === 'j2').length;
   if (j1 === 0) return 'j2';
   if (j2 === 0) return 'j1';
   if (j1 === 1 && j2 === 1) return 'draw';
+
+  // Nul par répétition — même position 3 fois
+  if (history.length > 0) {
+    const current = serializeBoard(board);
+    const count = history.filter(h => h === current).length;
+    if (count >= 3) return 'draw';
+  }
+
+  // Plus de mouvements possibles
   const j2pieces = board.map((v,i) => ({v,i})).filter(x => x.v?.p === 'j2');
   if (j2pieces.every(x => getMoves(board, x.i).length === 0)) return 'j1';
+
   return null;
 }
 
@@ -120,19 +134,14 @@ export function aiMove(board, difficulty = 'normal') {
       let score = 0;
 
       if (difficulty === 'easy') {
-        // Facile : pur hasard
         score = Math.random() * 10;
-
       } else if (difficulty === 'normal') {
-        // Normal : préfère capturer, sinon aléatoire
         score = (m.capture ? 10 : 0) + Math.random() * 8;
-
       } else {
-        // Difficile : maximise captures + avance + protection
         score = (m.capture ? 20 : 0)
-          + (Math.floor(m.to/5) === 4 ? 10 : 0)          // promotion
-          + (Math.floor(m.to/5) >= 3 ? 4 : 0)            // avancer
-          + ([0,4,5,9,10,14,15,19,20,24].includes(m.to) ? -2 : 0) // évite bords
+          + (Math.floor(m.to/5) === 4 ? 10 : 0)
+          + (Math.floor(m.to/5) >= 3 ? 4 : 0)
+          + ([0,4,5,9,10,14,15,19,20,24].includes(m.to) ? -2 : 0)
           + Math.random() * 2;
       }
 
