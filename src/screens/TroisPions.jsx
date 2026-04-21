@@ -4,7 +4,7 @@ import TopBar from '../components/TopBar.jsx';
 import TurnBadge from '../components/TurnBadge.jsx';
 import StatsBar from '../components/StatsBar.jsx';
 
-export default function TroisPions({ onBack, stats, onStats, mode }) {
+export default function TroisPions({ onBack, stats, onStats, mode, difficulty }) {
   const [board, setBoard]     = useState(() => Array(9).fill(null));
   const [turn, setTurn]       = useState('j1');
   const [winner, setWinner]   = useState(null);
@@ -44,7 +44,7 @@ export default function TroisPions({ onBack, stats, onStats, mode }) {
   const doAI = useCallback((b, h) => {
     setThinking(true);
     setTimeout(() => {
-      const move = aiMove(b);
+      const move = aiMove(b, difficulty);
       if (!move) { setWinner('draw'); onStats('draws'); setThinking(false); return; }
       const next = [...b];
       if (move.type === 'place') next[move.to] = 'j2';

@@ -111,15 +111,35 @@ export function checkEnd(board) {
   return null;
 }
 
-export function aiMove(board) {
+export function aiMove(board, difficulty = 'normal') {
   const pieces = board.map((v,i) => ({v,i})).filter(x => x.v?.p === 'j2');
   let candidates = [];
+
   for (const {i} of pieces) {
     for (const m of getMoves(board, i)) {
-      let score = (m.capture ? 15 : 0) + (Math.floor(m.to/5) === 4 ? 8 : 0) + Math.random() * 5;
+      let score = 0;
+
+      if (difficulty === 'easy') {
+        // Facile : pur hasard
+        score = Math.random() * 10;
+
+      } else if (difficulty === 'normal') {
+        // Normal : préfère capturer, sinon aléatoire
+        score = (m.capture ? 10 : 0) + Math.random() * 8;
+
+      } else {
+        // Difficile : maximise captures + avance + protection
+        score = (m.capture ? 20 : 0)
+          + (Math.floor(m.to/5) === 4 ? 10 : 0)          // promotion
+          + (Math.floor(m.to/5) >= 3 ? 4 : 0)            // avancer
+          + ([0,4,5,9,10,14,15,19,20,24].includes(m.to) ? -2 : 0) // évite bords
+          + Math.random() * 2;
+      }
+
       candidates.push({ from: i, to: m.to, score });
     }
   }
+
   if (!candidates.length) return null;
   candidates.sort((a,b) => b.score - a.score);
   return candidates[0];

@@ -6,15 +6,17 @@ import TroisPions from './screens/TroisPions.jsx';
 const defaultStats = { wins: 0, losses: 0, draws: 0 };
 
 export default function App() {
-  const [screen, setScreen] = useState('home');
-  const [mode, setMode] = useState('ai'); // 'ai' ou '2p'
+  const [screen, setScreen]       = useState('home');
+  const [mode, setMode]           = useState('ai');
+  const [difficulty, setDifficulty] = useState('normal');
   const [stats, setStats] = useState({
     douze: { ai: {...defaultStats}, '2p': {...defaultStats} },
     trois: { ai: {...defaultStats}, '2p': {...defaultStats} },
   });
 
-  function onSelect(game, selectedMode) {
+  function onSelect(game, selectedMode, selectedDifficulty) {
     setMode(selectedMode);
+    setDifficulty(selectedDifficulty || 'normal');
     setScreen(game);
   }
 
@@ -30,11 +32,14 @@ export default function App() {
 
   return (
     <div style={{ minHeight:'100vh', background:'#0f0f14', overflowX:'hidden' }}>
-      {screen === 'home' && <Home onSelect={onSelect} />}
+      {screen === 'home' && (
+        <Home onSelect={onSelect} />
+      )}
       {screen === 'douze' && (
         <DouzePions
-          key={mode}
+          key={mode + difficulty}
           mode={mode}
+          difficulty={difficulty}
           onBack={() => setScreen('home')}
           stats={stats.douze[mode]}
           onStats={(r) => onStats('douze', r)}
@@ -42,8 +47,9 @@ export default function App() {
       )}
       {screen === 'trois' && (
         <TroisPions
-          key={mode}
+          key={mode + difficulty}
           mode={mode}
+          difficulty={difficulty}
           onBack={() => setScreen('home')}
           stats={stats.trois[mode]}
           onStats={(r) => onStats('trois', r)}

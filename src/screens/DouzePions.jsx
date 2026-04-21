@@ -4,7 +4,7 @@ import TopBar from '../components/TopBar.jsx';
 import TurnBadge from '../components/TurnBadge.jsx';
 import StatsBar from '../components/StatsBar.jsx';
 
-export default function DouzePions({ onBack, stats, onStats, mode }) {
+export default function DouzePions({ onBack, stats, onStats, mode, difficulty }) {
   const [board, setBoard]       = useState(makeBoard);
   const [sel, setSel]           = useState(null);
   const [turn, setTurn]         = useState('j1');
@@ -35,7 +35,7 @@ export default function DouzePions({ onBack, stats, onStats, mode }) {
   setTimeout(() => {
     let cur = b;
 
-    const first = aiMove(cur);
+    const first = aiMove(cur, difficulty);
     if (!first) { endGame('j1'); setThinking(false); return; }
 
     const wasCapture = getCaptures(cur, first.from).some(m => m.to === first.to);
