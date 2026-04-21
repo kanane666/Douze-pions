@@ -7,17 +7,32 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      includeAssets: ['icon.svg'],
       manifest: {
-        name: 'Jeux de Plateau',
-        short_name: 'Jeux',
-        description: 'Douze Pions et Trois Pions',
-        theme_color: '#D4537E',
-        background_color: '#ffffff',
+        name: 'Douze & Trois',
+        short_name: 'D&T',
+        description: 'Deux jeux stratégiques — Douze Pions et Trois Pions',
+        theme_color: '#0f0f14',
+        background_color: '#0f0f14',
         display: 'standalone',
         orientation: 'portrait',
+        start_url: '/',
         icons: [
-          { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/icon-512.png', sizes: '512x512', type: 'image/png' }
+          {
+            src: 'icon.svg',
+            sizes: 'any',
+            type: 'image/svg+xml',
+            purpose: 'any maskable',
+          }
+        ]
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,svg,png,ico}'],
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+            handler: 'CacheFirst',
+          }
         ]
       }
     })
