@@ -3,6 +3,7 @@ import { useState } from 'react';
 export default function Home({ onSelect, stats, onResetStats }) {
   const [difficulty, setDifficulty] = useState('normal');
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
 
   const games = [
     {
@@ -31,7 +32,6 @@ export default function Home({ onSelect, stats, onResetStats }) {
     { id: 'hard',   label: 'Difficile' },
   ];
 
-  // Calcule les stats globales toutes parties confondues
   function globalStats() {
     let wins = 0, losses = 0, draws = 0;
     for (const game of ['douze', 'trois']) {
@@ -59,6 +59,187 @@ export default function Home({ onSelect, stats, onResetStats }) {
 
   const g = globalStats();
 
+  // ── ÉCRAN À PROPOS ───────────────────────────────────────────
+  if (showAbout) {
+    return (
+      <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 0 40px' }}>
+        {/* TopBar */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '16px 20px',
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
+        }}>
+          <button onClick={() => setShowAbout(false)} style={{
+            width: 40, height: 40, borderRadius: 12,
+            background: 'rgba(255,255,255,0.07)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            color: '#fff', fontSize: 18, display: 'flex',
+            alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+          }}>←</button>
+          <span style={{ fontSize: 16, fontWeight: 600, color: '#fff' }}>À propos</span>
+          <div style={{ width: 40 }} />
+        </div>
+
+        <div style={{ padding: '32px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+          {/* Logo + titre */}
+          <div style={{ textAlign: 'center', marginBottom: 8 }}>
+            <div style={{
+              width: 72, height: 72, borderRadius: 20, margin: '0 auto 16px',
+              background: 'linear-gradient(135deg, rgba(224,64,160,0.2), rgba(0,212,255,0.2))',
+              border: '1px solid rgba(255,255,255,0.1)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 32,
+            }}>
+              ♟
+            </div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: '#fff', letterSpacing: -0.5 }}>
+              Douze &amp; Trois
+            </div>
+            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', marginTop: 6 }}>
+              Version 1.0
+            </div>
+          </div>
+
+          {/* Histoire */}
+          <div style={{
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(255,255,255,0.07)',
+            borderRadius: 18, padding: '20px 22px',
+          }}>
+            <div style={{ fontSize: 11, letterSpacing: 2, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', marginBottom: 12 }}>
+              L'histoire
+            </div>
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)', lineHeight: 1.8, margin: 0 }}>
+              Ces jeux, on les jouait dans notre enfance — accroupis dans le sable, on creusait des petits trous avec les doigts et on ramassait des pierres. Les blanches pour l'un, les noires pour l'autre. Pour Trois Pions, c'étaient des bâtons plantés en terre.
+            </p>
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)', lineHeight: 1.8, margin: '12px 0 0' }}>
+              Ces jeux commençaient à disparaître. Alors j'ai décidé, en tant qu'informaticien, de les préserver et de les faire revivre sous forme d'application — pour que les prochaines générations puissent y jouer aussi.
+            </p>
+          </div>
+
+          {/* Règles Douze Pions */}
+          <div style={{
+            background: 'rgba(224,64,160,0.06)',
+            border: '1px solid rgba(224,64,160,0.15)',
+            borderRadius: 18, padding: '20px 22px',
+          }}>
+            <div style={{ fontSize: 11, letterSpacing: 2, color: '#e040a0', textTransform: 'uppercase', marginBottom: 14 }}>
+              Règles — Douze Pions
+            </div>
+            {[
+              'Plateau 5×5 · 12 pierres chacun · 1 case vide au départ',
+              'Déplacements horizontaux et verticaux uniquement',
+              'On mange un pion en sautant par-dessus (case vide derrière)',
+              'Prise non obligatoire — vous choisissez',
+              'Prise multiple possible si enchaînement immédiat',
+              'Dame obtenue en atteignant la dernière ligne adverse',
+              'La Dame se déplace sur plusieurs cases dans toutes directions',
+              'Nul si même position répétée 3 fois ou 1 pion chacun',
+            ].map((r, i) => (
+              <div key={i} style={{ display: 'flex', gap: 10, marginBottom: 10, alignItems: 'flex-start' }}>
+                <div style={{
+                  width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
+                  background: 'rgba(224,64,160,0.2)', border: '1px solid rgba(224,64,160,0.3)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 10, fontWeight: 700, color: '#e040a0', marginTop: 1,
+                }}>{i + 1}</div>
+                <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6 }}>{r}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Règles Trois Pions */}
+          <div style={{
+            background: 'rgba(0,212,255,0.05)',
+            border: '1px solid rgba(0,212,255,0.15)',
+            borderRadius: 18, padding: '20px 22px',
+          }}>
+            <div style={{ fontSize: 11, letterSpacing: 2, color: '#00d4ff', textTransform: 'uppercase', marginBottom: 14 }}>
+              Règles — Trois Pions
+            </div>
+            {[
+              '9 positions sur un carré avec lignes H, V et 2 diagonales',
+              'Chaque joueur pose ses 3 bâtons à tour de rôle',
+              'Une fois les 3 posés, on déplace un bâton existant',
+              'Premier à aligner 3 bâtons en ligne gagne',
+              'Nul si la même position se répète sans gagnant',
+            ].map((r, i) => (
+              <div key={i} style={{ display: 'flex', gap: 10, marginBottom: 10, alignItems: 'flex-start' }}>
+                <div style={{
+                  width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
+                  background: 'rgba(0,212,255,0.15)', border: '1px solid rgba(0,212,255,0.3)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 10, fontWeight: 700, color: '#00d4ff', marginTop: 1,
+                }}>{i + 1}</div>
+                <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6 }}>{r}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Créateur */}
+          <div style={{
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(255,255,255,0.07)',
+            borderRadius: 18, padding: '20px 22px',
+          }}>
+            <div style={{ fontSize: 11, letterSpacing: 2, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', marginBottom: 16 }}>
+              Créateur
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
+              <div style={{
+                width: 48, height: 48, borderRadius: '50%',
+                background: 'linear-gradient(135deg, #e040a0, #00d4ff)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 18, fontWeight: 700, color: '#fff', flexShrink: 0,
+              }}>
+                AD
+              </div>
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 600, color: '#fff' }}>Ababacar Dieng</div>
+                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>Développeur · Préservateur de culture</div>
+              </div>
+            </div>
+            <a href="mailto:diengbabacar666@gmail.com" style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: '12px 16px', borderRadius: 12,
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              color: 'rgba(255,255,255,0.6)', fontSize: 13,
+              textDecoration: 'none', transition: 'background 0.2s',
+            }}>
+              <span style={{ fontSize: 16 }}>✉</span>
+              diengbabacar666@gmail.com
+            </a>
+          </div>
+
+          {/* Lien app */}
+          <div style={{
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(255,255,255,0.07)',
+            borderRadius: 18, padding: '20px 22px',
+            textAlign: 'center',
+          }}>
+            <div style={{ fontSize: 11, letterSpacing: 2, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', marginBottom: 12 }}>
+              Application
+            </div>
+            <a href="https://12pions.netlify.app" target="_blank" rel="noreferrer" style={{
+              fontSize: 15, fontWeight: 600, color: '#e040a0',
+              textDecoration: 'none', letterSpacing: 0.3,
+            }}>
+              12pions.netlify.app
+            </a>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', marginTop: 8 }}>
+              Installable sur Android &amp; iOS · Fonctionne hors ligne
+            </div>
+          </div>
+
+        </div>
+      </div>
+    );
+  }
+
+  // ── ÉCRAN PRINCIPAL ──────────────────────────────────────────
   return (
     <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 0 40px' }}>
 
@@ -76,28 +257,35 @@ export default function Home({ onSelect, stats, onResetStats }) {
           </div>
         </div>
 
-        {/* Bouton reset */}
-        {g.total > 0 && (
-          <button
-            onClick={() => setShowConfirm(true)}
-            style={{
-              marginTop: 8, padding: '8px 14px', borderRadius: 10,
+        {/* Boutons header */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+          <button onClick={() => setShowAbout(true)} style={{
+            padding: '8px 14px', borderRadius: 10,
+            background: 'rgba(255,255,255,0.05)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            color: 'rgba(255,255,255,0.5)', fontSize: 12,
+            cursor: 'pointer', whiteSpace: 'nowrap',
+          }}>
+            À propos
+          </button>
+          {g.total > 0 && (
+            <button onClick={() => setShowConfirm(true)} style={{
+              padding: '8px 14px', borderRadius: 10,
               background: 'rgba(255,255,255,0.05)',
               border: '1px solid rgba(255,255,255,0.1)',
               color: 'rgba(255,255,255,0.35)', fontSize: 12,
               cursor: 'pointer', whiteSpace: 'nowrap',
-            }}
-          >
-            Reset stats
-          </button>
-        )}
+            }}>
+              Reset stats
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Confirmation reset */}
       {showConfirm && (
         <div style={{
-          margin: '0 20px 20px',
-          padding: '16px 20px',
+          margin: '0 20px 20px', padding: '16px 20px',
           background: 'rgba(255,255,255,0.06)',
           border: '1px solid rgba(255,255,255,0.12)',
           borderRadius: 16,
@@ -108,18 +296,17 @@ export default function Home({ onSelect, stats, onResetStats }) {
           </span>
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={() => setShowConfirm(false)} style={{
-              padding: '7px 14px', borderRadius: 9, border: '1px solid rgba(255,255,255,0.1)',
-              background: 'transparent', color: 'rgba(255,255,255,0.4)', fontSize: 12, cursor: 'pointer',
-            }}>
-              Annuler
-            </button>
+              padding: '7px 14px', borderRadius: 9,
+              border: '1px solid rgba(255,255,255,0.1)',
+              background: 'transparent', color: 'rgba(255,255,255,0.4)',
+              fontSize: 12, cursor: 'pointer',
+            }}>Annuler</button>
             <button onClick={() => { onResetStats(); setShowConfirm(false); }} style={{
-              padding: '7px 14px', borderRadius: 9, border: '1px solid rgba(224,64,160,0.4)',
-              background: 'rgba(224,64,160,0.15)', color: '#e040a0', fontSize: 12,
-              fontWeight: 600, cursor: 'pointer',
-            }}>
-              Confirmer
-            </button>
+              padding: '7px 14px', borderRadius: 9,
+              border: '1px solid rgba(224,64,160,0.4)',
+              background: 'rgba(224,64,160,0.15)', color: '#e040a0',
+              fontSize: 12, fontWeight: 600, cursor: 'pointer',
+            }}>Confirmer</button>
           </div>
         </div>
       )}
@@ -135,7 +322,6 @@ export default function Home({ onSelect, stats, onResetStats }) {
             border: '1px solid rgba(255,255,255,0.07)',
             borderRadius: 18, padding: '16px 20px',
           }}>
-            {/* Chiffres */}
             <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
               {[
                 { label: 'Victoires', val: g.wins,   color: '#e040a0' },
@@ -151,15 +337,9 @@ export default function Home({ onSelect, stats, onResetStats }) {
                 </div>
               ))}
             </div>
-
-            {/* Barre taux victoire */}
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: 1 }}>
-                TAUX DE VICTOIRE
-              </span>
-              <span style={{ fontSize: 11, fontWeight: 700, color: g.rate >= 50 ? '#e040a0' : '#00d4ff' }}>
-                {g.rate}%
-              </span>
+              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: 1 }}>TAUX DE VICTOIRE</span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: g.rate >= 50 ? '#e040a0' : '#00d4ff' }}>{g.rate}%</span>
             </div>
             <div style={{ height: 5, borderRadius: 5, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
               <div style={{
@@ -186,9 +366,8 @@ export default function Home({ onSelect, stats, onResetStats }) {
         }}>
           {levels.map(l => (
             <button key={l.id} onClick={() => setDifficulty(l.id)} style={{
-              flex: 1, padding: '10px 8px',
-              borderRadius: 11, border: 'none', cursor: 'pointer',
-              fontSize: 13, fontWeight: 600,
+              flex: 1, padding: '10px 8px', borderRadius: 11,
+              border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600,
               background: difficulty === l.id ? 'rgba(255,255,255,0.12)' : 'transparent',
               color: difficulty === l.id ? '#fff' : 'rgba(255,255,255,0.35)',
               boxShadow: difficulty === l.id ? '0 0 0 1px rgba(255,255,255,0.15)' : 'none',
@@ -217,11 +396,9 @@ export default function Home({ onSelect, stats, onResetStats }) {
               }}>
                 {g.board}
               </div>
-
               <div style={{ padding: '20px 24px 22px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                   <div style={{ fontSize: 22, fontWeight: 700, color: '#fff' }}>{g.title}</div>
-                  {/* Mini stats par jeu */}
                   {gs.total > 0 && (
                     <div style={{
                       display: 'flex', gap: 8, alignItems: 'center',
@@ -236,11 +413,9 @@ export default function Home({ onSelect, stats, onResetStats }) {
                     </div>
                   )}
                 </div>
-
                 <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', lineHeight: 1.6, marginBottom: 18 }}>
                   {g.desc}
                 </div>
-
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button
                     onClick={() => onSelect(g.id, 'ai', difficulty)}
